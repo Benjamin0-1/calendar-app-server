@@ -2,10 +2,11 @@ const { Sequelize } = require('sequelize');
 
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    protocol: 'postgres',
-    logging: false, // Disable logging to avoid cluttering the console
-  });
+    logging: false,
+    username: 'u5t3iugiosqfbh',
+    password: 'pa571f199b7caf34ac82acc863720037402152df8989e16e8f48c3001d8e35148',
+    database: 'd8uq1buokqri55',
+});
   
   // Set the timezone if needed
   sequelize.options.timezone = 'America/Mexico_City';
