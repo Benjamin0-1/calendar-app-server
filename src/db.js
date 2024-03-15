@@ -1,5 +1,6 @@
 const { Sequelize } = require('sequelize');
 
+/*
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     logging: false,
@@ -12,13 +13,13 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   // Set the timezone if needed
   sequelize.options.timezone = 'America/Mexico_City';
   
-  module.exports = sequelize;
+  module.exports = sequelize; */
 
  /*
 const sequelize = new Sequelize({
     database: 'Terraza',
     username: 'postgres',
-    password: 'postgres', // was 12******
+    password: '12241530', // was 12******
     host: 'localhost',
     dialect: 'postgres',
     logging: false
@@ -26,6 +27,20 @@ const sequelize = new Sequelize({
 
 sequelize.options.timezone = 'America/Mexico_City';
 
-module.exports = sequelize;
+module.exports = sequelize;  */
 
-*/
+
+
+const sequelize = new Sequelize({
+    database: 'Terraza',
+    username: 'root',
+    password: '',
+    host: 'localhost',
+    dialect: 'mysql',
+    logging: false,
+  //  timezone: 'America/Mexico_City',
+});
+
+//sequelize.options.timezone = 'America/Mexico_City';
+
+module.exports = sequelize; 
