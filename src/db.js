@@ -31,11 +31,11 @@ module.exports = sequelize;  */
 
 
 
-const sequelize = new Sequelize({
-    database: 'Terraza',
-    username: 'root',
-    password: '',
-    host: 'localhost',
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    database: 'heroku_8a3e63a177b74ab', // was Terraza
+    username: 'b35d03b5a47501', // was root
+    password: 'c0a1b7b0', // was None
+    host: 'us-cluster-east-01.k8s.cleardb.net',
     dialect: 'mysql',
     logging: false,
   //  timezone: 'America/Mexico_City',
