@@ -1,19 +1,20 @@
 const { Sequelize } = require('sequelize');
 
-/*
+
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     logging: false,
-    username: 'u5t3iugiosqfbh',
-    password: 'pa571f199b7caf34ac82acc863720037402152df8989e16e8f48c3001d8e35148',
-    database: 'd8uq1buokqri55',
-    host: 'cb889jp6h2eccm.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
+    username: 'u5g2narkv6isdo',
+    password: 'pe2704b8f1b22a06c6189764b4351137437a1e81a37502810e685abcd44d434ab',
+    database: 'd6h2das5vbaqgb',
+    host: 'cc3engiv0mo271.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
 });
-  
-  // Set the timezone if needed
+// will try everything from scratch, have db already set up before pushing the first commit. also pi
+
   sequelize.options.timezone = 'America/Mexico_City';
   
-  module.exports = sequelize; */
+  module.exports = sequelize; 
+
 
  /*
 const sequelize = new Sequelize({
@@ -29,8 +30,8 @@ sequelize.options.timezone = 'America/Mexico_City';
 
 module.exports = sequelize;  */
 
-
-
+/*
+mysql
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     database: 'heroku_8a3e63a177b74ab', // was Terraza
     username: 'b35d03b5a47501', // was root
@@ -41,6 +42,6 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   //  timezone: 'America/Mexico_City',
 });
 
-//sequelize.options.timezone = 'America/Mexico_City';
+//sequelize.options.timezone = 'America/Mexico_City'; 
 
-module.exports = sequelize; 
+module.exports = sequelize;  */

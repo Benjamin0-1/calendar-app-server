@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
+//postgres
 
-/*
 const BookedDate = sequelize.define('BookedDate', {
     date_id: {
         type: DataTypes.INTEGER,
@@ -41,10 +41,10 @@ const BookedDate = sequelize.define('BookedDate', {
     updatedAt: true
 });
 
-module.exports = BookedDate;  */
+module.exports = BookedDate;  
 
 
-
+/*
 // mysql
 const BookedDate = sequelize.define('BookedDate', {
     date_id: {
@@ -86,4 +86,4 @@ const BookedDate = sequelize.define('BookedDate', {
 
 
 
-module.exports = BookedDate; 
+module.exports = BookedDate;  */
