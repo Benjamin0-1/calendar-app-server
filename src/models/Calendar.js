@@ -22,7 +22,7 @@ const BookedDate = sequelize.define('BookedDate', {
     },
     owner: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: false // was true
     },
     person_who_booked: {
         type: DataTypes.STRING,

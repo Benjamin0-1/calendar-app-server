@@ -6,6 +6,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
     username: 'u5t3iugiosqfbh',
     password: 'pa571f199b7caf34ac82acc863720037402152df8989e16e8f48c3001d8e35148',
     database: 'd8uq1buokqri55',
+    host: 'cb889jp6h2eccm.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
 });
   
   // Set the timezone if needed
