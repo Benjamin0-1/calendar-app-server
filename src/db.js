@@ -66,3 +66,7 @@ const sequelize = new Sequelize({
   logging: false,
   dialect: 'postgres',
 });
+
+sequelize.options.timezone = 'America/Mexico_City';
+
+module.exports = sequelize;
