@@ -12,7 +12,7 @@ const session = require('express-session');
 const app = express();
 
 const corsOptions = {
-    origin: ['http://localhost:3000', 'http://192.168.100.70:3000', 'http://192.168.100.65:3000'],
+    origin: ['https://65feb9f2159c7fed5acec402--rad-otter-086d62.netlify.app/'],
     credentials: true,
 }
 
