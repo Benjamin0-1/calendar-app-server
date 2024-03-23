@@ -4,7 +4,10 @@ const cors = require('cors');
 const sequelize = require('./db');
 const BookedDate = require('./models/Calendar');
 const session = require('express-session');
+require('dotenv').config();
 
+const USERNAME = process.env.username; // for the login
+const PASSWORD = process.env.password; // for the login
 
 const app = express();
 
@@ -74,10 +77,10 @@ app.post('/login', (req, res) => {
     const { username, password } = req.body;
   
     try {
-        console.log('Received login request with credentials:', username, password);
-        console.log('session: ', req.session);
+       // console.log('Received login request with credentials:', username, password);
+       // console.log('session: ', req.session);
 
-        if (username === 'Compadres' && password === 'Compadres2024') {
+        if (username === USERNAME && password === PASSWORD) { // all caps are coming from the env file.
             req.session.isLoggedIn = true;
             console.log('Login successful!');
             res.json({ access: true, successMessage: true, session: req.session });
@@ -269,42 +272,78 @@ app.get('/getbookingcount', async (req, res) => {
 });
 
 
-// route to update an existing booking, if it doesn't exist 
-app.put('/updatebooking', async(req, res) => {
-    const { dateToUpdate } = req.query;
-    const {phone_number, name, custom_message} = req.body;
+// route to update an existing booking, all untouched values must remain the same as they were, this provides a better user experience.
+/*
+app.put('/updatebooking/:dateToUpdate', async (req, res) => {
+    const { dateToUpdate } = req.params;
+    const { person_who_booked, phone_number, email, custom_message, owner } = req.body;
+    
     try {
-    // using findOne because each date is unique and this way it's also faster.
-    const existingDate = await BookedDate.findOne({
-        where: {date: dateToUpdate}
-    });
+        const existingDate = await BookedDate.findOne({
+            where: { date: dateToUpdate }
+        });
 
-    if (!existingDate) {
-        res.status(404).json({notFoundError: 'No such date was found'})
-    };
+        if (!existingDate) {
+            return res.status(404).json({ notFoundError: 'No such date was found' });
+        }
 
-    fieldsToUpdate = {};
-    if (phone_number) {
-        fieldsToUpdate.phone_number = phone_number;
-    };
-    if (name) {
-        fieldsToUpdate.name = name;
-    };
-    if (custom_message) {
-        fieldsToUpdate.custom_message = custom_message;
-    };
+        // Make sure at least 1 value is passed
+        if (!person_who_booked && !phone_number && !email && !custom_message && !owner) {
+            return res.status(400).json({ message: 'Must pass at least 1 value to update' });
+        }
 
-    if (Object.keys(fieldsToUpdate)) {
-        await BookedDate.update(fieldsToUpdate, {
-            where: {date: existingDate}
-        })
+        // Prepare fields to update
+        const fieldsToUpdate = {};
+
+        if (person_who_booked) {
+            fieldsToUpdate.person_who_booked = person_who_booked;
+        }
+
+        if (phone_number) {
+            fieldsToUpdate.phone_number = phone_number;
+        }
+
+        if (email) {
+            fieldsToUpdate.email = email;
+        }
+
+        if (custom_message) {
+            fieldsToUpdate.custom_message = custom_message;
+        }
+
+        if (owner) {
+            fieldsToUpdate.owner = owner;
+        }
+
+        // Update the booking only if there are fields to update
+        if (Object.keys(fieldsToUpdate).length > 0) {
+            await BookedDate.update(fieldsToUpdate, {
+                where: { date: dateToUpdate }
+            });
+        }
+
+        // Retrieve the updated booking
+        const updatedBooking = await BookedDate.findOne({
+            where: { date: dateToUpdate }
+        });
+
+        // Format date if needed (optional)
+        if (updatedBooking) {
+            // Perform any date formatting here if necessary
+        }
+
+        // Return the updated booking
+        res.status(200).json({ successMessage: `Fecha: ${dateToUpdate} actualizada con exito`, updatedBooking });
+
+    } catch (error) {
+        console.error('Error updating booking:', error);
+        res.status(500).send('Internal Server Error');
     }
-    res.send('Booking successfully updated')
+}); */
 
-} catch(error) {
-        res.status(500).send('Internal Server Error')
-      };
-});
+
+
+
 
 // so far it worked with jane doe only 1 person who booked with such name.
 app.get('/searchbypersonwhobooked', async(req, res) => {
@@ -377,12 +416,120 @@ app.get('/searchbydaterange', async (req, res) => {
     }
 });
 
+//deletebyname (all).
+app.delete('/deletebyname/:name', async(req, res) => {
+    const name = req.params.name;
+    if (!name) {
+        return res.status(400).json({message: 'Missing name field'});
+    };
+    if (name.length > 50) {
+        return res.status(400).json({message: 'Name is too long', enteredName: name});
+    };
+
+    try {
+        const datesToDelete = BookedDate.findAll({
+            where: {
+                person_who_booked:name
+            }
+        });
+
+        const datesCount = await BookedDate.count({
+            where: {person_who_booked: name}});
+
+        if (datesCount === 0){
+            return res.status(404).send({notFoundMessage: `No se encontraron fechas con el nombre de cliente: ${name}`});
+        };
+
+        await BookedDate.destroy({
+            where: {
+                person_who_booked: name
+            }
+        });
+
+        res.json({successMessage: `Se han eliminado: ${datesCount} fechas con el nombre de cliente: ${name}`});
+
+    } catch (error) {
+        res.status(500).json(`Internal Server Error: ${error}`);
+    }
+});
+
+//detelebyphone (all).
+app.delete('/deletebyphone/:number', async (req, res) => {
+    const number = req.params.number;
+
+    if (!/^[0-9]+$/.test(number)) {return res.status(400).json({invalidNumberMessage: `Numero telefonico invalido: ${number}`})};
+
+    if (!number) {
+        return res.status(400).json('Phone Number missing.');
+    };
+    if (number.length < 7) {
+        return res.status(400).json(`Phone number is too short: ${number}`);
+    };
+    if (number.length > 50) {return res.status(400).json({tooLongNumMessage: `numero telefonico demasiado largo: ${number}`})};
 
 
+    try {
+        const phoneNumbersCount = await BookedDate.count({
+            where: { phone_number: number }
+        });
+
+        if (phoneNumbersCount === 0) {
+            return res.status(404).json({ notFoundMessage: `No se ha encontrado ninguna fecha con el numero telefonico: ${number}` });
+        }
+
+        await BookedDate.destroy({
+            where: {
+                phone_number: number
+            }
+        });
+
+        return res.status(201).json({ successMessage: `Se han eliminado: ${phoneNumbersCount} fechas con el numero telefonico: ${number}` });
+    } catch (error) {
+        return res.status(500).json(`Internal Server Error: ${error}`);
+    }
+});
 
 
+//deletebydaterange(all).
+app.delete('/deletebyrange/:start/:end', async (req, res) => {
+    const { start, end } = req.params;
 
+    if (!start || !end) {
+        return res.status(400).json({ message: 'Missing date fields' });
+    }
 
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+        return res.status(400).json({ invalidDateFormat: `Invalid date format: ${start} ${end}` });
+    };
+
+    const currentDate = new Date();
+
+    try {
+        const datesCount = await BookedDate.count({
+            where: {
+                date: {
+                    [Op.between]: [start, end] // Use variables instead of strings
+                }
+            }
+        });
+
+        if (datesCount === 0) {
+            return res.status(404).json({ notFoundMessage: `No se encontraron fechas entre ${start} y ${end}` });
+        }
+
+        await BookedDate.destroy({
+            where: {
+                date: {
+                    [Op.between]: [start, end] // Use variables instead of strings
+                }
+            }
+        });
+
+        return res.status(201).json({ successMessage: `Se han eliminado ${datesCount} fechas con el rango proporcionado, inicio: ${start} fin: ${end}` });
+    } catch (error) {
+        return res.status(500).json(`Internal Server Error: ${error}`);
+    }
+});
 
 
 

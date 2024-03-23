@@ -1,7 +1,18 @@
 const { Sequelize } = require('sequelize');
+require('dotenv').config();
 
+//production: railway.
+const sequelize = new Sequelize(process.env.POSTGRES_DB, process.env.POSTGRES_USER, process.env.POSTGRES_PASSWORD, {
+  host: process.env.PGHOST,
+  dialect: 'postgres',
+  logging: false, 
+});
 
+sequelize.options.timezone = 'America/Mexico_City';
 
+module.exports = sequelize;
+
+/*
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     logging: false,
     username: 'u5g2narkv6isdo',
@@ -14,9 +25,9 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   sequelize.options.timezone = 'America/Mexico_City';
   
   module.exports = sequelize; 
+*/
 
-
- /*
+ /* <= localhost, development.
 const sequelize = new Sequelize({
     database: 'Terraza',
     username: 'postgres',
@@ -24,15 +35,15 @@ const sequelize = new Sequelize({
     host: 'localhost',
     dialect: 'postgres',
     logging: false
-});
+}); */
 
 sequelize.options.timezone = 'America/Mexico_City';
 
-module.exports = sequelize;  */
+module.exports = sequelize;  
 
 /*
 mysql
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
+const sequelize = new Sequelize(process.env.DATABASE_URL, { <= this is WRONG, pass it down below instead.
     database: 'heroku_8a3e63a177b74ab', // was Terraza
     username: 'b35d03b5a47501', // was root
     password: 'c0a1b7b0', // was None
