@@ -4,10 +4,10 @@ const cors = require('cors');
 const sequelize = require('./db');
 const BookedDate = require('./models/Calendar');
 const session = require('express-session');
-require('dotenv').config();
+//require('dotenv').config();
 
-const USERNAME = process.env.username; // for the login
-const PASSWORD = process.env.password; // for the login
+//const USERNAME = process.env.username; // for the login
+//const PASSWORD = process.env.password; // for the login
 
 const app = express();
 
@@ -80,7 +80,7 @@ app.post('/login', (req, res) => {
        // console.log('Received login request with credentials:', username, password);
        // console.log('session: ', req.session);
 
-        if (username === USERNAME && password === PASSWORD) { // all caps are coming from the env file.
+        if (username === 'Compadres' && password === 'Compadres2024') { // all caps are coming from the env file.
             req.session.isLoggedIn = true;
             console.log('Login successful!');
             res.json({ access: true, successMessage: true, session: req.session });
