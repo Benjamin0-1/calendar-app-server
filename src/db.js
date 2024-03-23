@@ -1,6 +1,7 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+/*
 //production: railway.
 const sequelize = new Sequelize(process.env.POSTGRES_DB, process.env.POSTGRES_USER, process.env.POSTGRES_PASSWORD, {
   host: process.env.PGHOST,
@@ -10,7 +11,7 @@ const sequelize = new Sequelize(process.env.POSTGRES_DB, process.env.POSTGRES_US
 
 sequelize.options.timezone = 'America/Mexico_City';
 
-module.exports = sequelize;
+module.exports = sequelize; */
 
 /*
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
@@ -35,11 +36,11 @@ const sequelize = new Sequelize({
     host: 'localhost',
     dialect: 'postgres',
     logging: false
-}); */
+}); 
 
 sequelize.options.timezone = 'America/Mexico_City';
 
-module.exports = sequelize;  
+module.exports = sequelize;   /*
 
 /*
 mysql
@@ -56,3 +57,12 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, { <= this is WRONG, pa
 //sequelize.options.timezone = 'America/Mexico_City'; 
 
 module.exports = sequelize;  */
+
+const sequelize = new Sequelize({
+  database: 'deid183oumsb3t',
+  username: 'utc4n60886t2p',
+  password: 'p2c1cc0a3788525f9eb31b95be499aa1b9b4df76d06af3ad4f35daf4742c188aa',
+  host: 'cb889jp6h2eccm.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
+  logging: false,
+  dialect: 'postgres',
+});
