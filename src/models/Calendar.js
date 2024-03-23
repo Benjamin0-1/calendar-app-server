@@ -9,7 +9,7 @@ const BookedDate = sequelize.define('BookedDate', {
         primaryKey: true
     },
     phone_number: {
-        type: DataTypes.STRING, // STRING type since it can contains special chars such as '+, -'
+        type: DataTypes.STRING, // STRING type since it can contain special characters such as '+, -'
         allowNull: false
     },
     email: {
@@ -33,13 +33,19 @@ const BookedDate = sequelize.define('BookedDate', {
         allowNull: false,
         unique: true,
         get() {
-            return this.getDataValue('date').toLocaleDateString('en-US')
+            const dateValue = this.getDataValue('date');
+            if (dateValue instanceof Date) {
+                return dateValue.toLocaleDateString('en-US');
+            } else {
+                return dateValue; // Or handle the case differently based on your requirements
+            }
         }
     }
 }, {
     timestamps: true,
     updatedAt: true
 });
+
 
 module.exports = BookedDate;  
 
