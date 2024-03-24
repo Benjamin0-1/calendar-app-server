@@ -26,19 +26,15 @@ const PORT = process.env.PORT ||  4001
 app.use(express.json());
 
 
-app.use(
-    session({
-      secret: 'random-long-secret-key-here', // Update with a strong and secure secret key
-      resave: false,
-      saveUninitialized: true,
-      cookie: {
-        secure: false, // Set to true only in production
-        httpOnly: true,
-        maxAge: 3600000 // Set to the desired session expiration time in milliseconds
-      }
-    })
-);
-
+app.use(session({
+    secret: 'secret-asdasdgadvf34asd',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 60 * 100000000,
+        httpOnly: true
+    }
+}));
   
 
 
