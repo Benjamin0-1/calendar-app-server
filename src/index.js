@@ -13,8 +13,7 @@ const app = express();
 
 const corsOptions = {
     origin: ['https://rad-otter-086d62.netlify.app'],
-    credentials: true,
-    methods: ['POST', 'DELETE', 'PUT'] // Apply CORS to all methods except GET
+    credentials: true
 };
 
 
