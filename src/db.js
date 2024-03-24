@@ -1,6 +1,23 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+
+/*
+mysql
+const sequelize = new Sequelize(process.env.DATABASE_URL, { <= this is WRONG, pass it down below instead.
+    database: 'heroku_8a3e63a177b74ab', // was Terraza
+    username: 'b35d03b5a47501', // was root
+    password: 'c0a1b7b0', // was None
+    host: 'us-cluster-east-01.k8s.cleardb.net',
+    dialect: 'mysql',
+    logging: false,
+  //  timezone: 'America/Mexico_City',
+});
+
+//sequelize.options.timezone = 'America/Mexico_City'; 
+
+module.exports = sequelize;  */
+
 /*
 //production: railway.
 const sequelize = new Sequelize(process.env.POSTGRES_DB, process.env.POSTGRES_USER, process.env.POSTGRES_PASSWORD, {
@@ -28,7 +45,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   module.exports = sequelize; 
 */
 
- /* <= localhost, development.
+/*
 const sequelize = new Sequelize({
     database: 'Terraza',
     username: 'postgres',
@@ -40,25 +57,11 @@ const sequelize = new Sequelize({
 
 sequelize.options.timezone = 'America/Mexico_City';
 
-module.exports = sequelize;   /*
+module.exports = sequelize;    */
 
-/*
-mysql
-const sequelize = new Sequelize(process.env.DATABASE_URL, { <= this is WRONG, pass it down below instead.
-    database: 'heroku_8a3e63a177b74ab', // was Terraza
-    username: 'b35d03b5a47501', // was root
-    password: 'c0a1b7b0', // was None
-    host: 'us-cluster-east-01.k8s.cleardb.net',
-    dialect: 'mysql',
-    logging: false,
-  //  timezone: 'America/Mexico_City',
-});
 
-//sequelize.options.timezone = 'America/Mexico_City'; 
-
-module.exports = sequelize;  */
-
-const sequelize = new Sequelize({
+  
+const sequelize = new Sequelize({ // < - ALREADY DEPLOYED ON HEROKU.
   database: 'deid183oumsb3t',
   username: 'utc4n60886t2p',
   password: 'p2c1cc0a3788525f9eb31b95be499aa1b9b4df76d06af3ad4f35daf4742c188aa',
@@ -75,4 +78,4 @@ const sequelize = new Sequelize({
 
 sequelize.options.timezone = 'America/Mexico_City';
 
-module.exports = sequelize;
+module.exports = sequelize; 

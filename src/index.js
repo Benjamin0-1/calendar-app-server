@@ -12,9 +12,11 @@ const session = require('express-session');
 const app = express();
 
 const corsOptions = {
-    origin: ['https://65feb9f2159c7fed5acec402--rad-otter-086d62.netlify.app'],
+    origin: ['https://65feb9f2159c7fed5acec402--rad-otter-086d62.netlify.app', 'http://localhost:3001', '*'],
     credentials: true,
-}
+    methods: ['POST', 'PUT', 'DELETE'] // Apply CORS to all methods except GET
+};
+
 
 
 app.use(cors(corsOptions));
@@ -31,7 +33,7 @@ app.use(
       resave: false,
       saveUninitialized: true,
       cookie: {
-        secure: false, // https must be true
+        secure: true, // https must be true
         httpOnly: true, // https must be false
         maxAge: 3600000 * 10000
       }
@@ -48,20 +50,26 @@ app.use('/', (req, res, next) => {
 
 const isAuthenticatedMiddleware = (req, res, next) => {
 
-    if (req.originalUrl === '/login') {
+    if (req.originalUrl === '/login' || req.method === 'GET') {
         return next();
-    }
+    };
 
     if (req.isLoggedIn) {
-        next();
+        return next();
     } else {
-        res.status(401).json({ access: false, message: 'Unauthorized' });
+        return res.status(401).json({ access: false, message: 'Unauthorized' });
     }
 };
 
-// middleware to protect all routes, simple implementation so far.
+app.use(isAuthenticatedMiddleware); 
 
-//app.use(isAuthenticatedMiddleware); //
+app.get('/check-auth', (req, res) => {
+    if (req.session.isLoggedIn) {
+        return res.json({authenticated: true})
+    } else {
+        return res.json({authenticated: false})
+    }
+});
 
 // Login route
 app.post('/login', (req, res) => {
@@ -69,11 +77,9 @@ app.post('/login', (req, res) => {
     // if user is authenticated then redirect/send message.
     if (req.session.isLoggedIn) {
 
-        req.session.destroy(); // THIS LINE IS FOR DEBUGGING ONLY AND SHOULD BE CHECKED BACK LATER ! . creates a bug intentionally.
-
         return res.json({message: 'User is already authenticated' });
     }
-
+;
 
     const { username, password } = req.body;
   
