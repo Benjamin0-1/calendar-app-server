@@ -12,7 +12,6 @@ const session = require('express-session');
 const app = express();
 
 
-
 const corsOptions = {
     origin: ['https://terraza-calendario-oficial.netlify.app'],
     credentials: true
@@ -50,7 +49,7 @@ app.use('/', (req, res, next) => {
 });
 
 
-//const isAuthenticatedMiddleware = (req, res, next) => {
+const isAuthenticatedMiddleware = (req, res, next) => {
 
     if (req.originalUrl === '/login') {
         return next();
@@ -63,7 +62,7 @@ app.use('/', (req, res, next) => {
     }
 };
 
-app.use(isAuthenticatedMiddleware); 
+//app.use(isAuthenticatedMiddleware); 
 
 app.get('/check-auth', (req, res) => {
     if (req.session.isLoggedIn) {
