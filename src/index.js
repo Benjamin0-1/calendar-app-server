@@ -32,7 +32,7 @@ app.use(
       resave: false,
       saveUninitialized: true,
       cookie: {
-        secure: process.env.NODE_ENV === 'production', // Set to true only in production
+        secure: false, // Set to true only in production
         httpOnly: true,
         maxAge: 3600000 // Set to the desired session expiration time in milliseconds
       }
