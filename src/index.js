@@ -32,7 +32,8 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         maxAge: 60 * 60 * 90000, // Example: Set cookie expiration to 1 hour
-        httpOnly: true
+        httpOnly: true,
+        secure: false,
     }
 }));
 
@@ -58,7 +59,7 @@ const isAuthenticatedMiddleware = (req, res, next) => {
     }
 };
 
-//app.use(isAuthenticatedMiddleware); 
+app.use(isAuthenticatedMiddleware); 
 
 app.get('/check-auth', (req, res) => {
     if (req.session.isLoggedIn) {
