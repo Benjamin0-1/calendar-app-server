@@ -12,7 +12,7 @@ const session = require('express-session');
 const app = express();
 
 const corsOptions = {
-    origin: ['https://rad-otter-086d62.netlify.app'],
+    origin: ['https://terraza-calendario-oficial.netlify.app'],
     credentials: true
 };
 
@@ -31,7 +31,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 60 * 60 * 1000, // Example: Set cookie expiration to 1 hour
+        maxAge: 60 * 60 * 90000, // Example: Set cookie expiration to 1 hour
         httpOnly: true
     }
 }));
