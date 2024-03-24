@@ -40,10 +40,7 @@ app.use(session({
   
 
 
-app.use('/', (req, res, next) => {
-    req.isLoggedIn = req.session.isLoggedIn || false;
-    next();
-});
+
 
 
 const isAuthenticatedMiddleware = (req, res, next) => {
