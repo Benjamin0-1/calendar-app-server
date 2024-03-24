@@ -29,16 +29,17 @@ app.use(express.json());
 
 app.use(
     session({
-      secret: 'your-secret-key-admin-dash-2024', 
+      secret: 'random-long-secret-key-here', // Update with a strong and secure secret key
       resave: false,
       saveUninitialized: true,
       cookie: {
-        secure: true, // https must be true
-        httpOnly: true, // https must be false
-        maxAge: 3600000 * 10000
+        secure: process.env.NODE_ENV === 'production', // Set to true only in production
+        httpOnly: true,
+        maxAge: 3600000 // Set to the desired session expiration time in milliseconds
       }
     })
-  );
+);
+
   
 
 
@@ -76,7 +77,7 @@ app.post('/login', (req, res) => {
     console.log(req.session);
     // if user is authenticated then redirect/send message.
     if (req.session.isLoggedIn) {
-
+        console.log('User is already authenticated');
         return res.json({message: 'User is already authenticated' });
     }
 ;
