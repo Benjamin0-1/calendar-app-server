@@ -26,16 +26,18 @@ const PORT = process.env.PORT ||  4001
 app.use(express.json());
 
 
-app.use(session({
-    secret: 'your-strong-secret-here',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        maxAge: 60 * 60 * 90000, // Example: Set cookie expiration to 1 hour
-        httpOnly: true,
-        secure: false
-    }
-}));
+app.use(
+    session({
+      secret: 'your-secret-key-admin-dash-2024234', 
+      resave: false,
+      saveUninitialized: true,
+      cookie: {
+        secure: false, 
+        httpOnly: true, 
+        maxAge: 3600000 * 10000
+      }
+    })
+  );
 
   
 
