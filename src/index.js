@@ -11,7 +11,6 @@ const session = require('express-session');
 
 const app = express();
 
-app.enable('trust proxy');
 
 
 const corsOptions = {
@@ -34,7 +33,6 @@ app.use(
       secret: 'your-secret-key-admin-dash-2024234', 
       resave: false,
       saveUninitialized: true,
-      proxy: true,
       cookie: {
         secure: false, 
         httpOnly: true, 
@@ -52,7 +50,7 @@ app.use('/', (req, res, next) => {
 });
 
 
-const isAuthenticatedMiddleware = (req, res, next) => {
+//const isAuthenticatedMiddleware = (req, res, next) => {
 
     if (req.originalUrl === '/login') {
         return next();
