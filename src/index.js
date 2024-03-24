@@ -34,6 +34,7 @@ app.use(
       secret: 'your-secret-key-admin-dash-2024234', 
       resave: false,
       saveUninitialized: true,
+      proxy: true,
       cookie: {
         secure: false, 
         httpOnly: true, 
