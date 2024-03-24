@@ -11,6 +11,9 @@ const session = require('express-session');
 
 const app = express();
 
+app.enable('trust proxy');
+
+
 const corsOptions = {
     origin: ['https://terraza-calendario-oficial.netlify.app'],
     credentials: true
