@@ -58,7 +58,7 @@ const isAuthenticatedMiddleware = (req, res, next) => {
     }
 };
 
-app.use(isAuthenticatedMiddleware); 
+//app.use(isAuthenticatedMiddleware); 
 
 app.get('/check-auth', (req, res) => {
     if (req.session.isLoggedIn) {
