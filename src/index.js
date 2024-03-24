@@ -27,14 +27,15 @@ app.use(express.json());
 
 
 app.use(session({
-    secret: 'secret-asdasdgadvf34asd',
+    secret: 'your-strong-secret-here',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 60 * 100000000,
+        maxAge: 60 * 60 * 1000, // Example: Set cookie expiration to 1 hour
         httpOnly: true
     }
 }));
+
   
 
 
