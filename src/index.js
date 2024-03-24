@@ -12,9 +12,9 @@ const session = require('express-session');
 const app = express();
 
 const corsOptions = {
-    origin: ['https://65feb9f2159c7fed5acec402--rad-otter-086d62.netlify.app', 'http://localhost:3001', '*'],
+    origin: ['https://rad-otter-086d62.netlify.app'],
     credentials: true,
-    methods: ['POST', 'PUT', 'DELETE'] // Apply CORS to all methods except GET
+    methods: ['POST', 'DELETE', 'PUT'] // Apply CORS to all methods except GET
 };
 
 
