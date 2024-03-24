@@ -215,7 +215,7 @@ function isValidDate(dateString) {
     return regex.test(dateString);
 };
 
-app.get('/deletebooking', async (req, res) => {
+app.delete('/deletebooking', async (req, res) => {
     const { deleteBooking } = req.query;
 
     if (!isValidDate(deleteBooking)) {
