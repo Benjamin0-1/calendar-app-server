@@ -16,6 +16,14 @@ const BookedDate = sequelize.define('BookedDate', {
         type: DataTypes.STRING,
         allowNull: true 
     },
+
+    // here goes the "apartado" field, which will have some validations at a route level.
+
+ //   apartado: { // se puede agregar validacion para un minimo de apartado requerido. (lo cual se podra cambiar en el front)
+ //       type: DataTypes.FLOAT, // PRICE WILL BE IN MXN / mexican pesos
+ //       allowNull: false
+ //   },
+
     custom_message: {
         type: DataTypes.TEXT,
         allowNull: true
@@ -24,6 +32,8 @@ const BookedDate = sequelize.define('BookedDate', {
         type: DataTypes.STRING,
         allowNull: false // was true
     },
+
+    // al cliente al cual se le aparto la terraza
     person_who_booked: {
         type: DataTypes.STRING,
         allowNull: false

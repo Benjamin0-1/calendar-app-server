@@ -45,7 +45,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   module.exports = sequelize; 
 */
 
-/*
+
 const sequelize = new Sequelize({
     database: 'Terraza',
     username: 'postgres',
@@ -57,9 +57,9 @@ const sequelize = new Sequelize({
 
 sequelize.options.timezone = 'America/Mexico_City';
 
-module.exports = sequelize;    */
+module.exports = sequelize;    
 
-
+/*
   
 const sequelize = new Sequelize({ // < - ALREADY DEPLOYED ON HEROKU.
   database: 'deid183oumsb3t',
@@ -79,3 +79,4 @@ const sequelize = new Sequelize({ // < - ALREADY DEPLOYED ON HEROKU.
 sequelize.options.timezone = 'America/Mexico_City';
 
 module.exports = sequelize; 
+*/

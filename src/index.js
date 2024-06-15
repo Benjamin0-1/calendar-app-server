@@ -1,120 +1,173 @@
 const { Op } = require('sequelize');
 const express = require('express');
-const cors = require('cors');
 const sequelize = require('./db');
 const BookedDate = require('./models/Calendar');
-const session = require('express-session');
-//require('dotenv').config();
+const DeletedDate = require('./models/DeletedDate') // to keep track of deleted dates.
+const NewsLetter = require('./models/NewsLetter'); // new model.
+const jwt = require('jsonwebtoken'); // moving from sessions to JWTS
+const nodemailer = require('nodemailer'); // for notifications to both emails.
+const cors = require('cors');
+require('dotenv').config();
 
-//const USERNAME = process.env.username; // for the login
-//const PASSWORD = process.env.password; // for the login
+const USERNAME = process.env.USERNAME; // for the login
+const PASSWORD = process.env.PASSWORD; // for the login
+const ACCESS_SECRET = process.env.ACCESS_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
+const JOSE_EMAIL = process.env.JOSE_EMAIL;
+const RICARDO_EMAIL = process.env.RICARDO_EMAIL;
+const CONSUELO_EMAIL = process.env.CONSUELO_EMAIL;
 
-const app = express();
+// all user emails, they will get notified whenever a new date gets booked.
+const ALL_USER_EMAILS = [
+    'cinthyaaf@outlook.com',
+    'deadlyblackdeath@gmail.com',
+    'consueloruflo@gmail.com'
+]
 
 
-const corsOptions = {
-    origin: ['https://terraza-calendario-oficial.netlify.app'],
-    credentials: true
+// MUST RUN MIGRATIONS. (apartado) <-- until then, nothing is working for now.
+function isAuthenticated(req, res, next){
+    // first, extract the jwt
+    const token = req.headers['authorization']; 
+    // if not token then don't even bother
+    if (!token) {
+        return res.status(400).json('Must provide a token');
+    };
+
+    // if token then verify it.
+    try {
+        
+        // provide access (short-lived) token.
+        const decoded = jwt.verify(token.split(' ')[1], ACCESS_SECRET)
+        req.user = decoded
+        return next();
+
+    } catch (error) {
+        return res.status(401).json({message: 'Invalid token'})
+    }
 };
 
+// nodemailer setup
+const nodemailerOptions = {
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+    }
+};
+
+// transporter for node mailer
+// this function should go in the utils folder.
+async function initializeTransporter() {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD,
+        }
+    });
+
+    return transporter;
+}
 
 
-app.use(cors(corsOptions));
 
+// send mail function, <-- it should also go inside the utils folder.
+// verify that the change from message to body was successful.
+async function sendMail(transporter, to, subject, body) {
+    try {
+        const info = await transporter.sendMail({
+            from: nodemailerOptions.auth.user,
+            to: to, // Add the 'to' parameter here
+            subject: subject,
+            text: body,
+            html: `<p>${body}</p>`
+        });
+        console.log(`Message sent: ${info.messageId}`);
+        console.log(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+    } catch (error) {
+        console.error(`Error sending email to ${to}: ${error}`);
+        throw error;
+    }
+}
+
+// and that would complete the nodemailer configuration.
+
+
+
+// extra function to check for admin privileges and partys.
+
+const app = express();
+app.use(express.json());
+// Add CORS middleware
+app.use(cors({
+    origin:  process.env.FRONT_END_URL || 'http://localhost:3000', // Allow requests from this origin
+    credentials: true, // Allow credentials (cookies, JWTs, etc.)
+  }));
 
 const PORT = process.env.PORT ||  4001
 
-app.use(express.json());
-
-
-app.use(
-    session({
-      secret: 'your-secret-key-admin-dash-2024234', 
-      resave: false,
-      saveUninitialized: true,
-      cookie: {
-        secure: false, 
-        httpOnly: true, 
-        maxAge: 3600000 * 100
-      }
-    })
-  );
-
-  
-
-
-app.use('/', (req, res, next) => {
-    req.isLoggedIn = req.session.isLoggedIn || false;
-    next();
-});
-
-
-const isAuthenticatedMiddleware = (req, res, next) => {
-
-    if (req.originalUrl === '/login') {
-        return next();
-    };
-
-    if (req.isLoggedIn) {
-        return next();
-    } else {
-        return res.status(401).json({ access: false, message: 'Unauthorized' });
-    }
-};
-
-//app.use(isAuthenticatedMiddleware); 
-
-app.get('/check-auth', (req, res) => {
-    if (req.session.isLoggedIn) {
-        return res.json({authenticated: true})
-    } else {
-        return res.json({authenticated: false})
-    }
-});
-
 // Login route
 app.post('/login', (req, res) => {
-    console.log(req.session);
-    // if user is authenticated then redirect/send message.
-    if (req.session.isLoggedIn) {
-        console.log('User is already authenticated');
-        return res.json({message: 'User is already authenticated' });
-    }
-;
-
     const { username, password } = req.body;
-  
-    try {
-       // console.log('Received login request with credentials:', username, password);
-       // console.log('session: ', req.session);
 
-        if (username === 'Compadres' && password === 'Compadres2024') { // all caps are coming from the env file.
-            req.session.isLoggedIn = true;
-            console.log('Login successful!');
-            res.json({ access: true, successMessage: true, session: req.session });
-        } else {
-            console.log('Incorrect credentials');
-            res.status(401).json({ access: false, errorMessage: 'Incorrect credentials' });
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Missing required data', missingCredentials: true });
+    }
+
+    // Example: check username and password against database
+    if (username === USERNAME && password === PASSWORD) {
+        try {
+            const accessToken = jwt.sign({ username }, ACCESS_SECRET, { expiresIn: '200m' }); // < THIS IS FOR TESTING.
+            const refreshToken = jwt.sign({ username }, REFRESH_SECRET, { expiresIn: '360d' });
+
+            res.json({ access: true, accessToken, refreshToken });
+        } catch (error) {
+            console.error(`Error generating tokens: ${error}`);
+            res.status(500).json({ access: false, errorMessage: 'Internal server error' });
         }
-    } catch (error) {
-        console.error(`Error logging in: ${error}`);
-        res.status(500).json('Error logging in');
+    } else {
+        res.status(401).json({ access: false, errorMessage: 'Incorrect credentials' });
     }
 });
 
 
+
+app.post('/access-token', async (req, res) => {
+    const refreshToken = req.body.refreshToken;
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'No refresh token provided.' });
+    }
+
+    try {
+        jwt.verify(refreshToken, REFRESH_SECRET, (error, decoded) => {
+            if (error) {
+                return res.status(401).json({ invalidToken: 'Invalid refresh token' });
+            }
+
+            // If the refresh token is valid, generate a new access token
+            const accessToken = jwt.sign({ username: decoded.username }, ACCESS_SECRET, { expiresIn: '200m' });
+            res.json({ accessToken });
+        });
+    } catch (error) {
+        console.error('Error refreshing access token:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
   
 
-
+// when booking, send emails to both of them.
 // route to show all bookedDates
- app.get('/book', async(req, res) => {
-    console.log(req.session);
+ app.get('/book', isAuthenticated, async(req, res) => {
+
     try {
         const dateCount = await BookedDate.count();
         if (dateCount > 0) {
             
         const allDates = await BookedDate.findAll({
-            order: [['date', 'ASC']]
+            order: [['date', 'ASC']],
+            
         });
 
         res.json(allDates); } else {
@@ -126,9 +179,55 @@ app.post('/login', (req, res) => {
  });
 
 
-//route to book a date: most IMPORTANT one
-// Route to book a date: most IMPORTANT one
-app.post('/book', async (req, res) => {
+/*
+app.post('/book', isAuthenticated, async (req, res) => {
+    try {
+        const { phone_number, email, custom_message, owner, person_who_booked, date } = req.body;
+
+        // make sure it is all the required data excluding the optional ones.
+        if (!phone_number || !email || !owner || !person_who_booked || !date) {
+            return res.status(400).json('Missing required data')
+        };
+
+        // apartado is a FLOAT
+   
+
+        const existingDate = await BookedDate.findOne({
+            where: {
+                date: date
+            }
+        });
+
+        if (existingDate) {
+            res.status(400).json({ success: false, message: 'Date already booked', isDateBooked: true });
+            return;
+        }
+
+        const newBooking = await BookedDate.create({
+            phone_number,
+            email,
+         //   apartado, // ahora va el apartado <-- the minimum amount can be validated at the client level.
+         // also if apartado exists, then let them book otherwise throw an error.
+         // also they can check a box saying "apartado dado en full", this logic needs to be handled correctly
+            custom_message,
+            owner,
+            person_who_booked,
+            date
+        });
+
+        // here send the emails to the owners.
+
+        res.status(201).json(newBooking);
+    } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            res.status(400).json({success: false, message: 'Date is already Booked'})
+        }
+        console.error('LOGGING ERROR FROM CATCH BLOCK', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+}); */
+
+app.post('/book',isAuthenticated, async (req, res) => {
     try {
         const { phone_number, email, custom_message, owner, person_who_booked, date } = req.body;
 
@@ -152,10 +251,22 @@ app.post('/book', async (req, res) => {
             date
         });
 
+        // here send the email
+        const transporter = await initializeTransporter();
+        const subject = 'nueva fecha agendada.'
+        const body = `Una nueva fecha ha sido agendada para el dia: ${date}.
+        agendada por ${owner}. Nombre de cliente: ${person_who_booked} . numero telefonico de cliente: ${phone_number}`
+
+        // loop and email every user inside the list.
+        for (const userEmail of ALL_USER_EMAILS) {
+            await sendMail(transporter, userEmail, subject, body)
+        };
+
         res.status(201).json(newBooking);
     } catch (error) {
         if (error.name === 'SequelizeUniqueConstraintError') {
-            res.status(400).json({success: false, message: 'Date is already Booked'})
+            res.status(400).json({ success: false, message: 'Date is already Booked' });
+            return; // Stop further execution
         }
         console.error('LOGGING ERROR FROM CATCH BLOCK', error);
         res.status(500).json({ success: false, message: 'Internal Server Error' });
@@ -164,9 +275,12 @@ app.post('/book', async (req, res) => {
 
 
 
+// we can do soft deletion and then keep records of all the deleted books.
 //route to delete a date
-app.delete('/delete/:id', async (req, res) => {
+app.delete('/delete/:id', isAuthenticated, async (req, res) => {
     const id = req.params.id;
+
+    // first look for the date and if found then proceed to delete it.
     try {
         const dateToDelete = await BookedDate.destroy({
             where: {
@@ -187,7 +301,7 @@ app.delete('/delete/:id', async (req, res) => {
 
 // Route to check if a specific date is available
 // Using route parameter with regex for 'YYYY-MM-DD' format
-app.get('/checkdate', async (req, res) => {
+app.get('/checkdate', isAuthenticated,  async (req, res) => {
     const checkdate = req.query.checkdate;
     try {
         if (!checkdate || !isValidDate(checkdate)) {
@@ -210,18 +324,37 @@ app.get('/checkdate', async (req, res) => {
     }
 });
 
+// new route to see all of the available dates (I know...)
+app.get('/all-available-dates', isAuthenticated, async(req, res) => {
+    try {
+        
+        // find all the available dates.
+        const allAvailableDates = await BookedDate.findAll({where: {date: null}});
+
+        if (allAvailableDates.length === 0) {
+            return res.status(404).json({message: 'No dates available', noDatesAvailableFound: true})
+        };
+
+        res.json(allAvailableDates)
+
+    } catch (error) {
+        res.status(500).json(`Internal Server Error: ${error}`)
+    }
+});
+
 // regex to check YYYY-MM-DD Date format
 function isValidDate(dateString) {
     const regex = /^\d{4}-\d{2}-\d{2}$/;
     return regex.test(dateString);
 };
 
-app.delete('/deletebooking', async (req, res) => {
+app.delete('/deletebooking', isAuthenticated, async (req, res) => {
     const { deleteBooking } = req.query;
 
     if (!isValidDate(deleteBooking)) {
         return res.status(400).json({ message: 'Invalid date format' });
-    }; // this works
+    }
+
     try {
         const existingDateToDelete = await BookedDate.findOne({
             where: {
@@ -229,21 +362,22 @@ app.delete('/deletebooking', async (req, res) => {
             }
         });
 
-        console.log(existingDateToDelete);
-
         if (existingDateToDelete) {
-            // details:
-            
-            
-            await existingDateToDelete.destroy({
-                where: {
-                    date: existingDateToDelete
-                }
+            // create a single copy because that is what this route does.
+            const deletedDate = await DeletedDate.create({
+                phone_number: existingDateToDelete.phone_number,
+                owner: existingDateToDelete.owner,
+                person_who_booked: existingDateToDelete.person_who_booked,
+                date: existingDateToDelete.date,
+                custom_message: existingDateToDelete.custom_message,
+                email: existingDateToDelete.email
             });
+
+            await existingDateToDelete.destroy();
+
             res.status(200).json({ message: 'Booking deleted successfully', wasDateDeleted: true });
         } else {
             res.status(404).json({ message: 'No date found', noDateFound: true });
-            console.log(existingDateToDelete);
         }
     } catch (error) {
         console.error(error);
@@ -252,8 +386,9 @@ app.delete('/deletebooking', async (req, res) => {
 });
 
 
+
 //route to get how many bookings per owner
-app.get('/getbookingcount', async (req, res) => {
+app.get('/getbookingcount', isAuthenticated, async (req, res) => {
     try {
         const ricardoCount = await BookedDate.count({
             where: {
@@ -354,7 +489,7 @@ app.put('/updatebooking/:dateToUpdate', async (req, res) => {
 
 
 // so far it worked with jane doe only 1 person who booked with such name.
-app.get('/searchbypersonwhobooked', async(req, res) => {
+app.get('/searchbypersonwhobooked', isAuthenticated, async(req, res) => {
     const { searchbypersonwhobooked } = req.query;
     try {
         if (!searchbypersonwhobooked) {
@@ -374,7 +509,7 @@ app.get('/searchbypersonwhobooked', async(req, res) => {
 });
 
 //route to search a date by phone_number
-app.get('/searchbyphone', async(req, res) => { 
+app.get('/searchbyphone', isAuthenticated, async(req, res) => { 
     const { searchbyphone } = req.query; // phone_number is of type STRING in model. So no need to convert it to a number
     try {
         if (!searchbyphone) {
@@ -393,7 +528,7 @@ app.get('/searchbyphone', async(req, res) => {
 });
 
 //Fixed.
-app.get('/searchbydaterange', async (req, res) => {
+app.get('/searchbydaterange', isAuthenticated, async (req, res) => {
     const { start, end } = req.query;
     console.log('start: ', start, 'end: ', end);
 
@@ -416,7 +551,7 @@ app.get('/searchbydaterange', async (req, res) => {
         if (result.length > 0) {
             res.json(result);
         } else {
-            res.status(500).json({error: 'No dates were found'})
+            res.status(404).json({error: 'No dates were found'})
         }
     } catch (error) {
         console.log(`ERROR FROM CATCH: ${error}`);
@@ -425,7 +560,7 @@ app.get('/searchbydaterange', async (req, res) => {
 });
 
 //deletebyname (all).
-app.delete('/deletebyname/:name', async(req, res) => {
+app.delete('/deletebyname/:name', isAuthenticated, async(req, res) => {
     const name = req.params.name;
     if (!name) {
         return res.status(400).json({message: 'Missing name field'});
@@ -435,7 +570,7 @@ app.delete('/deletebyname/:name', async(req, res) => {
     };
 
     try {
-        const datesToDelete = BookedDate.findAll({
+        const datesToDelete = await BookedDate.findAll({
             where: {
                 person_who_booked:name
             }
@@ -447,6 +582,17 @@ app.delete('/deletebyname/:name', async(req, res) => {
         if (datesCount === 0){
             return res.status(404).send({notFoundMessage: `No se encontraron fechas con el nombre de cliente: ${name}`});
         };
+
+        // before deleting, create the copy.
+        const deletedDates = await DeletedDate.bulkCreate(datesToDelete.map(date => ({
+            phone_number: date.phone_number,
+            owner: date.owner,
+            person_who_booked: date.person_who_booked,
+            date: date.date,
+            custom_message: date.custom_message,
+            email: date.email
+        }))); 
+
 
         await BookedDate.destroy({
             where: {
@@ -462,28 +608,41 @@ app.delete('/deletebyname/:name', async(req, res) => {
 });
 
 //detelebyphone (all).
-app.delete('/deletebyphone/:number', async (req, res) => {
+app.delete('/deletebyphone/:number', isAuthenticated, async (req, res) => {
     const number = req.params.number;
 
-    if (!/^[0-9]+$/.test(number)) {return res.status(400).json({invalidNumberMessage: `Numero telefonico invalido: ${number}`})};
+    if (!/^[0-9]+$/.test(number)) {
+        return res.status(400).json({ invalidNumberMessage: `Numero telefonico invalido: ${number}` });
+    }
 
     if (!number) {
-        return res.status(400).json('Phone Number missing.');
-    };
+        return res.status(400).json({ errorMessage: 'Phone Number missing.' });
+    }
     if (number.length < 7) {
-        return res.status(400).json(`Phone number is too short: ${number}`);
-    };
-    if (number.length > 50) {return res.status(400).json({tooLongNumMessage: `numero telefonico demasiado largo: ${number}`})};
-
+        return res.status(400).json({ errorMessage: `Phone number is too short: ${number}` });
+    }
+    if (number.length > 50) {
+        return res.status(400).json({ tooLongNumMessage: `numero telefonico demasiado largo: ${number}` });
+    }
 
     try {
-        const phoneNumbersCount = await BookedDate.count({
+        const datesToDelete = await BookedDate.findAll({
             where: { phone_number: number }
         });
 
-        if (phoneNumbersCount === 0) {
+        if (datesToDelete.length === 0) {
             return res.status(404).json({ notFoundMessage: `No se ha encontrado ninguna fecha con el numero telefonico: ${number}` });
         }
+
+        // before deleting, create the copy.
+        const deletedDates = await DeletedDate.bulkCreate(datesToDelete.map(date => ({
+            phone_number: date.phone_number,
+            owner: date.owner,
+            person_who_booked: date.person_who_booked,
+            date: date.date,
+            custom_message: date.custom_message,
+            email: date.email
+        }))); 
 
         await BookedDate.destroy({
             where: {
@@ -491,15 +650,16 @@ app.delete('/deletebyphone/:number', async (req, res) => {
             }
         });
 
-        return res.status(201).json({ successMessage: `Se han eliminado: ${phoneNumbersCount} fechas con el numero telefonico: ${number}` });
+        return res.status(201).json({ successMessage: `Se han eliminado: ${datesToDelete.length} fechas con el numero telefonico: ${number}` });
     } catch (error) {
-        return res.status(500).json(`Internal Server Error: ${error}`);
+        return res.status(500).json({ errorMessage: `Internal Server Error: ${error}` });
     }
 });
 
 
+
 //deletebydaterange(all).
-app.delete('/deletebyrange/:start/:end', async (req, res) => {
+app.delete('/deletebyrange/:start/:end', isAuthenticated, async (req, res) => {
     const { start, end } = req.params;
 
     if (!start || !end) {
@@ -508,44 +668,163 @@ app.delete('/deletebyrange/:start/:end', async (req, res) => {
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
         return res.status(400).json({ invalidDateFormat: `Invalid date format: ${start} ${end}` });
-    };
-
-    const currentDate = new Date();
+    }
 
     try {
-        const datesCount = await BookedDate.count({
+        const datesToDelete = await BookedDate.findAll({
             where: {
                 date: {
-                    [Op.between]: [start, end] // Use variables instead of strings
+                    [Op.between]: [start, end]
                 }
             }
         });
+
+        const datesCount = datesToDelete.length;
 
         if (datesCount === 0) {
             return res.status(404).json({ notFoundMessage: `No se encontraron fechas entre ${start} y ${end}` });
         }
 
+        const deletedDates = await DeletedDate.bulkCreate(datesToDelete.map(date => ({
+            phone_number: date.phone_number,
+            owner: date.owner,
+            person_who_booked: date.person_who_booked,
+            date: date.date,
+            custom_message: date.custom_message,
+            email: date.email
+        }))); 
+
         await BookedDate.destroy({
             where: {
                 date: {
-                    [Op.between]: [start, end] // Use variables instead of strings
+                    [Op.between]: [start, end]
                 }
             }
         });
 
         return res.status(201).json({ successMessage: `Se han eliminado ${datesCount} fechas con el rango proporcionado, inicio: ${start} fin: ${end}` });
     } catch (error) {
-        return res.status(500).json(`Internal Server Error: ${error}`);
+        return res.status(500).json({ errorMessage: `Internal Server Error: ${error}` });
     }
 });
 
 
+// Route to see all of the deleted dates.
+app.get('/dates/all-deleted-dates', isAuthenticated, async(req, res) => {
+    try {
+        
+        const allDeletedDates = await DeletedDate.findAll({
+            order: [['date', 'ASC']],
+        });
+        if (allDeletedDates.length === 0) {
+            return res.status(404).json({noDeletedDatesFound: 'No deleted dates found'});
+        };
 
-sequelize.sync().then(() => {
-    app.listen(process.env.PORT || PORT, () => { // env port for deployment.
+        res.json(allDeletedDates);
+
+    } catch (error) {
+        res.status(500).json(`Internal Server Error`)
+    }
+});
+
+// filters by apartado higher or lower.
+app.get('/book/apartado/biggerthan/:amount', isAuthenticated, async(req, res) => {});
+
+app.get('/book/apartado/lessthan/:amount', isAuthenticated, async(req, res) => {});
+
+// here will go a route or routes to combine many filters together at once and without needing to provide them all in order
+// for this route to work.
+
+// ALL NEWSLETTER ROUTES GO HERE.
+app.get('/newsletter/all-emails', isAuthenticated, async(req, res) => { // only admins can access this.
+    try {
+        
+        const allNewsletterEmails = await NewsLetter.findAll();
+
+        if (allNewsletterEmails.length === 0) {
+            return res.status(404).json({message: 'No newsletter emails found', noNewsletterEmailsFound: true})
+        };
+
+        res.json(allNewsletterEmails);
+
+    } catch (error) {
+        res.status(500).json('Internal Server Error')
+    };
+});
+
+// this route does NOT use the isAuthenticated middleware
+// this route does NOT use the isAuthenticated middleware
+app.post('/newsletter/email', async (req, res) => {
+    const email = req.body.email;
+    if (!email) {
+        return res.status(400).json('Missing email');
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ invalidEmailFormat: true });
+    }
+
+    try {
+
+        const checkEmail = await NewsLetter.findOne({
+            where: {
+                email: email
+            }
+        });
+
+        if (checkEmail) {
+            return res.status(400).json({ emailAlreadyAdded: 'Email is already added' });
+        }
+
+        await NewsLetter.create({ email });
+
+        res.status(201).json('email added successfully to the newsletter');
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json('Internal Server Error');
+    }
+});
+
+
+// route to email all the newsletter users marketing emails.
+app.post('/newsletter/email-all-users', async(req, res) => {});
+
+sequelize.sync({ force: false }).then(() => {
+    app.listen(process.env.PORT || PORT, () => {
         console.log(`Server is running on port: ${PORT}`);
-    })
+    });
 });
 
 
 
+
+//module.exports = router;
+
+
+
+
+
+
+/**
+ changes:
+ 1: no real deletio anymore
+ 2: stop brute force attacks
+ 3: Email and Owner tables
+ 4: JWTS
+ 5: email confirmation on signup and proper validation of it.
+ 6: deleting and adding emails, DONE PROPERLY.
+ 7: password recovery functionality, DONE RIGHT.    
+ 8: 
+ 9: a few tests to ensure everything works right away.
+
+
+ front end:
+ 1: Material UI 5
+ 2: Landing Page styled fine.
+ 3: Are you sure type of button showing up before doing 'deletions', ETC.
+ 
+ */
+
+ 

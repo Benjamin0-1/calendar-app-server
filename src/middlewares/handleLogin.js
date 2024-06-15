@@ -1,1 +1,0 @@
-// create middleware to protect everything 
