@@ -23,8 +23,8 @@ const CONSUELO_EMAIL = process.env.CONSUELO_EMAIL;
 
 // all user emails, they will get notified whenever a new date gets booked.
 const ALL_USER_EMAILS = [
-    //'cinthyaaf@outlook.com',
-    //'consueloruflo@gmail.com',    <- ENABLE LATER.
+    'cinthyaaf@outlook.com',
+    'consueloruflo@gmail.com',  
     'olivermarco12@gmail.com',
 ];
 
