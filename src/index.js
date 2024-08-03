@@ -164,7 +164,7 @@ const app = express();
 app.use(express.json());
 // Add CORS middleware
 app.use(cors({
-    origin:  process.env.FRONT_END_URL || 'http://localhost:3000', // Allow requests from this origin
+    origin: 'https://terraza-calendario-oficial.netlify.app', // Allow requests from this origin
     credentials: true, // Allow credentials (cookies, JWTs, etc.)
   }));
 
