@@ -1,6 +1,7 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+/*
 const sequelize = new Sequelize({
     database: 'Terraza',
     username: 'postgres',
@@ -14,24 +15,25 @@ sequelize.options.timezone = 'America/Mexico_City';
 
 module.exports = sequelize;    
 
-/*
-  
-const sequelize = new Sequelize({ // < - ALREADY DEPLOYED ON HEROKU.
-  database: 'deid183oumsb3t',
-  username: 'utc4n60886t2p',
-  password: 'p2c1cc0a3788525f9eb31b95be499aa1b9b4df76d06af3ad4f35daf4742c188aa',
-  host: 'cb889jp6h2eccm.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
-  dialect: 'postgres',
+*/
+
+const sequelize = new Sequelize({
+  database: 'postgres',               // Default database name for Supabase
+  username: 'postgres',               // Supabase username
+  password: '#uen596sK!QQd.4',        // Supabase password
+  host: 'aws-0-us-west-1.pooler.supabase.com',
+  port: 6543,                         // Default port for Supabase
+  dialect: 'postgres',                // Use PostgreSQL dialect
   dialectOptions: {
     ssl: {
-      require: true, // This will enforce SSL
-      rejectUnauthorized: false // This option bypasses the verification of the certificate
+      require: true,                 // Enforce SSL connection
+      rejectUnauthorized: false      // Bypass certificate verification
     }
   },
-  logging: false,
+  logging: false,                     // Set to true if you want to see SQL queries
 });
 
+// Set timezone if needed
 sequelize.options.timezone = 'America/Mexico_City';
 
-module.exports = sequelize; 
-*/
+module.exports = sequelize;
