@@ -164,7 +164,7 @@ const app = express();
 app.use(express.json());
 // Add CORS middleware
 app.use(cors({
-    origin: 'https://terraza-calendario-oficial.netlify.app', // Allow requests from this origin
+    origin: 'https://calendar-app-client-two.vercel.app', // Allow requests from this origin
     credentials: true, // Allow credentials (cookies, JWTs, etc.)
   }));
 
