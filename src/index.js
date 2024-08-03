@@ -7,8 +7,12 @@ const NewsLetter = require('./models/NewsLetter'); // new model.
 const jwt = require('jsonwebtoken'); // moving from sessions to JWTS
 const nodemailer = require('nodemailer'); // for notifications to both emails.
 const cors = require('cors');
+const limiter = require('express-rate-limit'); // avoid 
+const loginRateLimitter = require('./middlewares/loginRateLimitter');
+
 require('dotenv').config();
 
+ 
 const USERNAME = process.env.USERNAME; // for the login
 const PASSWORD = process.env.PASSWORD; // for the login
 const ACCESS_SECRET = process.env.ACCESS_SECRET;
@@ -19,10 +23,10 @@ const CONSUELO_EMAIL = process.env.CONSUELO_EMAIL;
 
 // all user emails, they will get notified whenever a new date gets booked.
 const ALL_USER_EMAILS = [
-    'cinthyaaf@outlook.com',
-    'deadlyblackdeath@gmail.com',
-    'consueloruflo@gmail.com'
-]
+    //'cinthyaaf@outlook.com',
+    //'consueloruflo@gmail.com',    <- ENABLE LATER.
+    'olivermarco12@gmail.com',
+];
 
 
 // MUST RUN MIGRATIONS. (apartado) <-- until then, nothing is working for now.
@@ -76,20 +80,78 @@ async function initializeTransporter() {
 // verify that the change from message to body was successful.
 async function sendMail(transporter, to, subject, body) {
     try {
+        const htmlBody = `
+            <html>
+            <head>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f4f4f4;
+                    }
+                    .container {
+                        width: 100%;
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                        padding: 20px;
+                    }
+                    .header {
+                        background-color: #007bff;
+                        color: #ffffff;
+                        padding: 10px 20px;
+                        text-align: center;
+                        font-size: 24px;
+                        font-weight: bold;
+                    }
+                    .body {
+                        padding: 20px;
+                        line-height: 1.6;
+                    }
+                    .footer {
+                        text-align: center;
+                        padding: 10px 20px;
+                        font-size: 14px;
+                        color: #666666;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        ${subject}
+                    </div>
+                    <div class="body">
+                        <p>${body}</p>
+                    </div>
+                    <div class="footer">
+                        &copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
         const info = await transporter.sendMail({
             from: nodemailerOptions.auth.user,
-            to: to, // Add the 'to' parameter here
+            to: to,
             subject: subject,
             text: body,
-            html: `<p>${body}</p>`
+            html: htmlBody
         });
+
         console.log(`Message sent: ${info.messageId}`);
         console.log(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
     } catch (error) {
         console.error(`Error sending email to ${to}: ${error}`);
         throw error;
     }
-}
+};
+
 
 // and that would complete the nodemailer configuration.
 
@@ -108,7 +170,8 @@ app.use(cors({
 const PORT = process.env.PORT ||  4001
 
 // Login route
-app.post('/login', (req, res) => {
+// will change to only one type of token.
+app.post('/login', loginRateLimitter, (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -116,10 +179,10 @@ app.post('/login', (req, res) => {
     }
 
     // Example: check username and password against database
-    if (username === USERNAME && password === PASSWORD) {
+    if (username === 'Compadres' && password === 'Compadres2024') {
         try {
-            const accessToken = jwt.sign({ username }, ACCESS_SECRET, { expiresIn: '200m' }); // < THIS IS FOR TESTING.
-            const refreshToken = jwt.sign({ username }, REFRESH_SECRET, { expiresIn: '360d' });
+            const accessToken = jwt.sign({ username }, 'kdoaj4985748hcjkskdoap', { expiresIn: '2000m' }); // < THIS IS FOR TESTING.
+            const refreshToken = jwt.sign({ username }, 'gjlasdf90329r893sklsad', { expiresIn: '360d' });
 
             res.json({ access: true, accessToken, refreshToken });
         } catch (error) {
@@ -127,11 +190,36 @@ app.post('/login', (req, res) => {
             res.status(500).json({ access: false, errorMessage: 'Internal server error' });
         }
     } else {
-        res.status(401).json({ access: false, errorMessage: 'Incorrect credentials' });
+        res.status(401).json({ access: false, errorMessage: 'Incorrect credentials' }); // add how many seconds left if too many attempts.
     }
 });
 
 
+
+// GET a new access token.
+app.post('/access-token', (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(400).json({ message: 'Refresh token is required' });
+    }
+
+    jwt.verify(refreshToken, REFRESH_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ message: 'Invalid refresh token' });
+        }
+
+        const newAccessToken = jwt.sign({ username: user.username }, ACCESS_SECRET, { expiresIn: '200m' });
+
+        res.json({ accessToken: newAccessToken });
+    });
+});
+
+
+app.get('/profile', isAuthenticated, (req, res) => { 
+    const username = req.user.username;
+    res.json({ username });
+})
 
 app.post('/access-token', async (req, res) => {
     const refreshToken = req.body.refreshToken;
@@ -533,10 +621,13 @@ app.get('/searchbydaterange', isAuthenticated, async (req, res) => {
     console.log('start: ', start, 'end: ', end);
 
     try {
-        if (!isValidDate(start) || !isValidDate(end)) {
-            res.status(400).send('Invalid date format');
-            return;
-        }
+
+        // these few lines will be commented since in the front end
+        // users will use a "date" field form.
+     //   if (!isValidDate(start) || !isValidDate(end)) {
+     //       res.status(400).send('Invalid date format');
+     //       return;
+     //   }
 
         const result = await BookedDate.findAll({
             where: {
