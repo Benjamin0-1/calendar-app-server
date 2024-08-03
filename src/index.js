@@ -74,6 +74,7 @@ async function initializeTransporter() {
     return transporter;
 }
 
+const terrzaza_image_url = 'https://lh3.googleusercontent.com/p/AF1QipM36HoBX9hnYV37D582EUgs45jeJ3Ul1cv-5tv0=s1360-w1360-h1020';
 
 
 // send mail function, <-- it should also go inside the utils folder.
@@ -129,7 +130,7 @@ async function sendMail(transporter, to, subject, body) {
                         <p>${body}</p>
                     </div>
                     <div class="footer">
-                        &copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.
+                        &copy; ${new Date().getFullYear()} Terraza del valle. Todos los derechos reservados.
                     </div>
                 </div>
             </body>
@@ -314,6 +315,43 @@ app.post('/book', isAuthenticated, async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 }); */
+
+// filter by this owner.
+app.get('/book-ricardo', isAuthenticated, async(req, res) => { 
+    try {
+        const ricardoDates = await BookedDate.findAll({
+            where: {
+                owner: 'ricardo'
+            }
+        });
+
+        if (ricardoDates.length === 0) {
+            return res.status(404).json({message: 'No dates found for Ricardo', noDatesFound: true})
+        };
+
+        res.json(ricardoDates);
+    } catch (error) {
+        res.status(500).json('Internal Server Error')
+    }
+ });
+
+ app.get('/book-jose', isAuthenticated, async(req, res) => { 
+    try {
+        const joseDates = await BookedDate.findAll({
+            where: {
+                owner: 'jose'
+            }
+        });
+
+        if (joseDates.length === 0) {
+            return res.status(404).json({message: 'No dates found for Jose', noDatesFound: true})
+        };
+
+        res.json(joseDates);
+    } catch (error) {
+        res.status(500).json('Internal Server Error')
+    }
+ });
 
 app.post('/book',isAuthenticated, async (req, res) => {
     try {
@@ -577,24 +615,33 @@ app.put('/updatebooking/:dateToUpdate', async (req, res) => {
 
 
 // so far it worked with jane doe only 1 person who booked with such name.
-app.get('/searchbypersonwhobooked', isAuthenticated, async(req, res) => {
+app.get('/searchbypersonwhobooked', isAuthenticated, async (req, res) => {
     const { searchbypersonwhobooked } = req.query;
     try {
         if (!searchbypersonwhobooked) {
-            res.status(400).send('Must provide a valid name')
-        };
+            return res.status(400).send('Must provide a valid name');
+        }
+
         const existingPerson = await BookedDate.findAll({
-            where: {person_who_booked: searchbypersonwhobooked}
+            where: {
+                person_who_booked: {
+                    [Op.iLike]: searchbypersonwhobooked // Case-insensitive search
+                }
+            }
         });
-        if (!existingPerson) {
-            res.status(404).send('No person with such name was found')
-        } 
-        res.json(existingPerson); // must respond with all date details where the name matches.
+
+        if (existingPerson.length === 0) {
+            return res.status(404).send('No person with such name was found');
+        }
+
+        res.json(existingPerson);
 
     } catch (error) {
-        res.status(500).send('Internal Server Error')
+        console.error('Error searching by person who booked:', error);
+        res.status(500).send('Internal Server Error');
     }
 });
+
 
 //route to search a date by phone_number
 app.get('/searchbyphone', isAuthenticated, async(req, res) => { 
@@ -877,6 +924,12 @@ app.post('/newsletter/email', async (req, res) => {
         res.status(500).json('Internal Server Error');
     }
 });
+
+// new route to change the password, it will requrie an otp generated using the otp library.
+// it will expire after 15 minutes.
+// and this otp and otp_expiration will be inside the User model.
+
+
 
 
 // route to email all the newsletter users marketing emails.
