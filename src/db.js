@@ -1,5 +1,31 @@
 const { Sequelize } = require('sequelize');
-require('dotenv').config();
+const dotenv = require('dotenv').config();
+const fs = require('fs');
+
+
+
+// Sequelize configuration
+const sequelize = new Sequelize({
+  database: 'defaultdb',
+  username: 'avnadmin',
+  password: 'AVNS_BceGPWTfyOY4G61295C',
+  host: 'pg-1ce75fc8-oliver125125-2e2c.l.aivencloud.com',
+  port: 15230,
+  dialect: 'postgres',
+  dialectOptions: {
+    ssl: {
+      require: true, // Enforce SSL
+      rejectUnauthorized: false, // Bypass certificate verification
+   //   ca: sslCertificate // Include SSL certificate
+    }
+  },
+  logging: false,
+});
+
+sequelize.options.timezone = 'America/Mexico_City';
+
+module.exports = sequelize;
+
 
 /*
 const sequelize = new Sequelize({
@@ -16,24 +42,3 @@ sequelize.options.timezone = 'America/Mexico_City';
 module.exports = sequelize;    
 
 */
-
-const sequelize = new Sequelize({
-  database: 'postgres',               // Default database name for Supabase
-  username: 'postgres',               // Supabase username
-  password: '#uen596sK!QQd.4',        // Supabase password
-  host: 'aws-0-us-west-1.pooler.supabase.com',
-  port: 6543,                         // Default port for Supabase
-  dialect: 'postgres',                // Use PostgreSQL dialect
-  dialectOptions: {
-    ssl: {
-      require: true,                 // Enforce SSL connection
-      rejectUnauthorized: false      // Bypass certificate verification
-    }
-  },
-  logging: false,                     // Set to true if you want to see SQL queries
-});
-
-// Set timezone if needed
-sequelize.options.timezone = 'America/Mexico_City';
-
-module.exports = sequelize;
